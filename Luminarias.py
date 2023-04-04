@@ -9,17 +9,20 @@ from twython import Twython #pra tuitar
 import pytz #pra ajustar o fuso horário da biblioteca time
 
 #Dados de acesso da api do AdaFruit
-ADAFRUIT_IO_KEY = '***'
-ADAFRUIT_IO_USERNAME = '***'
-aio = Client(ADAFRUIT_IO_USERNAME, ADAFRUIT_IO_KEY)
+
+
 
 # Importação do arquivo com os dados de autenticação da api do Twitter / os dados ficam em um arquivo a parte
 from auth import (
- consumer_key,
- consumer_secret,
- access_token,
- access_token_secret
+    consumer_key,
+    consumer_secret,
+    access_token,
+    access_token_secret,
+    ADAFRUIT_IO_KEY,
+    ADAFRUIT_IO_USERNAME
 )
+
+aio = Client(ADAFRUIT_IO_USERNAME, ADAFRUIT_IO_KEY)
 
 #Atribui os emojis
 lampada = emoji.emojize(':light_bulb:')

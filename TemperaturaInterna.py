@@ -11,11 +11,11 @@ from auth import (
     consumer_key,
     consumer_secret,
     access_token,
-    access_token_secret
+    access_token_secret,
+    ADAFRUIT_IO_KEY,
+    ADAFRUIT_IO_USERNAME
 )
 
-ADAFRUIT_IO_KEY = '***'
-ADAFRUIT_IO_USERNAME = '***'
 aio = Client(ADAFRUIT_IO_USERNAME, ADAFRUIT_IO_KEY)
 
 temperature = aio.feeds('temperature')
