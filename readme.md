@@ -23,7 +23,7 @@ O código entra em um loop while, que é executado indefinidamente, enquanto o p
 
 ### UmidadeSoloSamambaia
 
-Este bot executa um loop infinito que checa a umidade da planta a cada hora. Se a umidade for menor que 45%, ele publica um tweet com uma mensagem aleatória pedindo para ser regada. Se a umidade diminuir mais do que 10 unidades em relação à última vez que foi medida, ele publica um tweet de agradecimento por ter sido regada. Se nenhuma dessas condições for atendida, o programa simplesmente imprime a hora atual e uma mensagem "nada acontece, feijoada".
+Este bot executa um loop infinito que checa a umidade da planta a cada hora. Se a umidade for menor que 45%, ele publica um tweet com uma mensagem aleatória pedindo para ser regada. Se a umidade aumentar mais do que 10 unidades em relação à última vez que foi medida, ele publica um tweet de agradecimento por ter sido regada. Se nenhuma dessas condições for atendida, o programa simplesmente imprime a hora atual e uma mensagem "nada acontece, feijoada".
 ![enter image description here](https://images2.imgbox.com/14/ec/ltJS3I42_o.jpg)
 
 ### TemperaturaExterna
