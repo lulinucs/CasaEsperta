@@ -1,110 +1,231 @@
 # CasaEsperta 🏠
 
-> "Essa pessoa espalhou sensores pela própria casa, conectou tudo ao Adafruit IO, escreveu bots em Python e fez a própria casa — inclusive uma samambaia e os animais — conversar pelo Twitter."
+O **CasaEsperta** foi um projeto pessoal de automação residencial que mantive por volta de 2021 na Casa Amarela.
 
-## Sobre o projeto
+A ideia começou com sensores, ESP32/ESP8266, relés e o Adafruit IO, mas acabou virando algo um pouco mais divertido: a casa ganhou uma conta no Twitter, [@espertacasa](https://x.com/espertacasa), e passou a contar o que estava acontecendo por aqui.
 
-O **CasaEsperta** foi um projeto pessoal de automação residencial e Internet das Coisas (IoT) que desenvolvi por volta de 2021. Ele nasceu em uma época anterior à popularização das ferramentas de IA generativa para programação, motivado puramente pela curiosidade, pela vontade de construir coisas e de aprender experimentando.
+Temperatura, umidade, chuva, luzes acesas ou apagadas e até a umidade da terra de uma samambaia viravam dados no Adafruit IO e, em alguns casos, publicações feitas automaticamente por scripts em Python.
 
-A ideia nunca foi ter apenas um sistema frio de automação. Eu queria que a casa ganhasse **personalidade**.
-
-Para isso, conectei sensores, microcontroladores, APIs e scripts em Python a uma conta no Twitter ([@espertacasa](https://x.com/espertacasa)). A casa não apenas coletava dados de temperatura, chuva ou o estado das luzes; ela publicava acontecimentos do mundo físico, ganhava uma "voz" e interagia de maneira divertida.
-
-Este repositório guarda os scripts originais desse projeto. Hoje, ele está **descontinuado** e mantido aqui exclusivamente como um **registro histórico** do meu aprendizado.
+Este repositório guarda esses scripts como foram escritos na época. O projeto está encerrado e hoje permanece aqui como registro histórico — tanto do sistema quanto de uma fase muito importante do meu aprendizado com programação, eletrônica e IoT.
 
 ---
 
-## Como a casa funcionava
+## Como funcionava
 
-A arquitetura geral do sistema foi construída conectando pequenos módulos pela casa a um hub central, que por sua vez alimentava bots no Twitter.
+A estrutura era relativamente simples:
 
 ```mermaid
-flowchart TD
-    A[Sensores e Relés pela casa] --> B[ESP32 / ESP8266]
-    B -->|MQTT / HTTP| C[Adafruit IO]
-    C -->|API| D[Scripts Python bots]
-    D -->|Tweepy| E[Twitter @espertacasa]
+flowchart LR
+    A[Sensores e relés] --> B[ESP32 / ESP8266]
+    B --> C[Adafruit IO]
+    C --> D[Scripts em Python]
+    D --> E[Twitter @espertacasa]
 ```
 
-### Sensores e Dispositivos
+ESP32 e ESP8266 espalhados pela casa faziam a interface com sensores e relés. Os dados eram enviados ao **Adafruit IO**, que funcionava como ponto central entre o mundo físico e os scripts em Python.
 
-Espalhei placas ESP32 e ESP8266 pela casa, conectadas a sensores de temperatura, umidade, chuva, umidade do solo e módulos de relé. Todo o hardware era montado manualmente, muitas vezes em protoboards, e o código era escrito pesquisando a documentação, errando e testando diretamente no hardware.
+Os scripts consultavam esses feeds e reagiam às mudanças: temperatura subindo ou descendo, valores máximos e mínimos, alterações nas luminárias e umidade do solo, por exemplo.
 
-![Protoboard com ESP e sensor](imgs/E5Y3-wTWYAIlJyU.jpg)
-*Montagem de um dos módulos de leitura de temperatura na protoboard.*
+Boa parte disso foi montada em protoboard, testada diretamente no hardware e escrita na base de documentação, pesquisa, tentativa e erro.
 
-![Display de temperatura](imgs/E7vfCFJWQAYKQ4y.jpg)
-*Um dos displays exibindo os dados locais.*
+![Bancada durante o desenvolvimento](imgs/E5ZC-hOXwAgT-wE.jpg)
 
-### O Cérebro: Adafruit IO
+![Eletrônica do projeto na bancada](imgs/E7uV7hOWQAQ-I-X.jpg)
 
-Todas essas placas não conversavam diretamente com o Twitter. Elas enviavam as informações para o **Adafruit IO**, que servia como a grande central de dados do projeto. Lá, havia um dashboard que permitia visualizar a situação atual da casa em tempo real e até mesmo controlar partes dela, como o acionamento de algumas luminárias.
+Um dos módulos também tinha um pequeno display OLED para mostrar os dados localmente:
 
-![Dashboard Adafruit IO](imgs/firefox_gI1k6MnNPz.png)
-*O painel principal (dashboard) no Adafruit IO, reunindo todos os feeds (temperatura, umidade, samambaia).*
-
-![Blocos Adafruit IO](imgs/firefox_ZrGOsZdjtO.png)
-*Configuração dos blocos e botões da interface no Adafruit.*
+![ESP com display de temperatura](imgs/E7vfCFJWQAYKQ4y.jpg)
 
 ---
 
-## A voz da casa: Os Bots no Twitter
+## Adafruit IO
 
-A parte mais especial do projeto eram os scripts Python (como `Luminarias.py`, `TemperaturaInterna.py`, etc.). Eles rodavam periodicamente consultando os dados do Adafruit IO e gerando publicações na conta do Twitter do projeto.
+O **Adafruit IO** era a central de dados do projeto.
 
-As alterações de temperatura geravam tweets, novas máximas e mínimas disparavam avisos, e até mesmo quando as luzes eram acesas, a casa podia comentar.
+Além de receber as leituras dos sensores, o dashboard permitia acompanhar de uma vez várias coisas que estavam acontecendo na casa: temperatura e umidade interna e externa, chuva, estado das luminárias e a umidade do solo da samambaia.
 
-### A samambaia que pedia água
+Também havia controles para alguns dispositivos ligados aos relés.
 
-Eu tinha uma samambaia em casa com um sensor de umidade inserido na terra do vaso. Quando a terra começava a secar e a umidade do solo atingia um nível crítico, o script `UmidadeSoloSamambaia.py` entrava em ação.
+![Dashboard do CasaEsperta no Adafruit IO](imgs/E55y_2DXIAI5_cC.jpg)
 
-A própria planta ganhou uma voz e publicava no Twitter pedindo para alguém regá-la. E, claro, se alguém colocasse água, o sensor detectava a mudança e ela agradecia.
-
-![Samambaia com sensor](imgs/E7uV7hOWQAQ-I-X.jpg)
-*O sensor de umidade posicionado no vaso da samambaia.*
-
-![Tweet da samambaia](imgs/firefox_dFcDqF3D4u.png)
-*A samambaia pedindo água no Twitter.*
-
-### O frio, os animais e o anti-spam de frases aleatórias
-
-Quando fazia frio, os scripts de temperatura ganhavam uma camada extra de personalidade: as publicações utilizavam fotografias dos nossos próprios animais de estimação vestindo roupas de frio ou enrolados em cobertores. Era uma forma de materializar o "frio que estava fazendo" com algo familiar.
-
-Além disso, havia um problema técnico a ser resolvido: o Twitter costumava classificar bots que postavam textos muito semelhantes (como "A temperatura é X") repetidamente como *spam*.
-
-Para contornar isso de forma criativa (e rústica), o código tinha um mecanismo que adicionava **frases aleatórias** no final dos tweets. O resultado era maravilhoso: a casa informava dados meteorológicos reais com muita seriedade, e logo depois emendava uma frase completamente absurda, dando uma característica única e divertida ao bot.
-
-![Tweet de frio com cachorro e frase aleatória](imgs/firefox_NQFcS3bRMz.png)
-*Informação do clima acompanhada de um cachorro no cobertor e uma das famosas frases aleatórias.*
-
-![Outro tweet de frio](imgs/firefox_cuRVVFajXf.png)
-*Os animais da casa eram os verdadeiros "âncoras" do nosso jornal meteorológico.*
-
-![Tweet geral com frase](imgs/firefox_A3w2pyJzGG.png)
-*Exemplo das frases aleatórias cumprindo seu papel para evitar bloqueios por spam.*
+No painel dá para ver um pouco da mistura que era o projeto: no mesmo lugar conviviam coisas como **Luz da Sala**, **Luminária**, temperatura, umidade, chuva e a **Sede da Sami**.
 
 ---
 
-## Estrutura do Código
+## A voz da casa: os bots no Twitter
 
-Os scripts refletem a maneira como eu programava na época e estão intencionalmente preservados como foram escritos:
+A parte de que eu mais gosto do projeto veio depois: fazer esses dados virarem uma espécie de personalidade da casa.
 
-- `Luminarias.py` / `LuminariasT.py`: Monitoravam e informavam o status de acionamento das luzes.
-- `TemperaturaExterna.py` / `TemperaturaInterna.py`: Consultavam e publicavam os dados climáticos.
-- `UmidadeSoloSamambaia.py`: Dava vida à samambaia sedenta.
-- `auth.py` *(apenas estrutura, sem credenciais reais)*: Arquivo de configuração de chaves de API (as senhas não estão no repositório nem no histórico).
+Os scripts em Python usavam a biblioteca **Twython** para publicar automaticamente na conta [@espertacasa](https://x.com/espertacasa).
+
+Não era simplesmente um log jogado no Twitter. Os scripts tentavam transformar acontecimentos da casa em mensagens: uma mudança de temperatura, um dia especialmente frio, uma luz que mudou de estado ou uma planta precisando de água.
+
+![Timeline da CasaEsperta](imgs/firefox_dFcDqF3D4u.png)
+
+![Mais publicações automáticas da casa](imgs/firefox_gI1k6MnNPz.png)
 
 ---
 
-## Estado Atual e Preservação
+## 🌿 A samambaia que pedia água
 
-**Aviso Importante:** Este projeto é mantido apenas como um **registro histórico**.
+Uma das moradoras monitoradas da Casa Amarela era uma samambaia.
 
-- O sistema está **descontinuado**.
-- As APIs utilizadas na época (especialmente a integração com o Twitter/X) sofreram mudanças drásticas e as bibliotecas antigas não funcionarão hoje em dia.
-- Dependências e métodos estão obsoletos.
-- O objetivo não é modernizar, mas preservar o código como ele existiu.
+Coloquei um sensor de umidade na terra do vaso e passei essa leitura para o Adafruit IO. No dashboard ela aparecia como **Sede da Sami**.
 
-O valor do **CasaEsperta** não está na perfeição do código ou numa arquitetura imaculada. Está em representar uma etapa especial do meu aprendizado, sendo a memória de uma época onde minha casa, minha samambaia e meus cachorros dividiam uma conta no Twitter para conversar com a gente.
+![A samambaia e seu sensor](imgs/E5Y3-wTWYAIlJyU.jpg)
 
-Você pode conferir a conta histórica do projeto (caso ainda exista) em: [@espertacasa no X](https://x.com/espertacasa).
+O script `UmidadeSoloSamambaia.py` verificava periodicamente essa leitura. Quando a umidade ficava baixa, a própria samambaia ia ao Twitter pedir água.
+
+Depois de regada, se o sistema detectasse um aumento significativo na umidade do solo, ela agradecia.
+
+![A samambaia aparecendo na conta da CasaEsperta](imgs/firefox_NQFcS3bRMz.png)
+
+Talvez tenha sido aí que o projeto deixou definitivamente de ser apenas um conjunto de sensores espalhados pela casa.
+
+---
+
+## 🌡️ Temperatura, bichos e a personalidade da casa
+
+Os scripts de temperatura acompanhavam as mudanças ao longo do dia, registravam máximas e mínimas e guardavam também os horários em que elas tinham ocorrido.
+
+À meia-noite, o sistema conseguia montar um resumo climático do dia com temperatura e umidade máximas e mínimas.
+
+Mas havia uma parte bem menos séria.
+
+Nos dias frios, a conta também usava fotos dos animais da casa agasalhados, enrolados em cobertas ou simplesmente sofrendo as consequências meteorológicas da Casa Amarela.
+
+![Tweet com um dos cachorros no frio](imgs/firefox_A3w2pyJzGG.png)
+
+![Um dos ratos devidamente protegido do frio](imgs/firefox_cuRVVFajXf.png)
+
+![Mais um registro meteorológico da fauna local](imgs/firefox_OokVZuhptZ.png)
+
+---
+
+## 🎲 O gerador de frases
+
+Publicar repetidamente mensagens praticamente iguais não era uma boa ideia no Twitter, então os bots precisavam variar o texto.
+
+Só que eu não resolvi isso criando simplesmente uma lista de tweets prontos.
+
+Os scripts de temperatura tinham pequenos **geradores combinatórios de frases**. Cada frase era dividida em pedaços e o Python sorteava uma opção de cada conjunto com `random.choice()`.
+
+Por exemplo, para uma queda de temperatura abaixo de 15 °C, existiam grupos como:
+
+```text
+"Bota as meia de lã"
+"Coloca as luvinhas"
+"Hoje tá liberado o aquecedor elétrico"
+"Cancela o banho"
+"Serve o conhaquinho"
+
+        +
+
+"pois"
+"porque"
+"pq"
+
+        +
+
+"está frio para um caralho"
+"tá uma friaca do djanho"
+
+        +
+
+"na Casa Amarela"
+"na Casinha Amarelinha"
+"na Casa Amarilla"
+"na Yellow House"
+"na Casa Esperta"
+"aqui na Baia"
+```
+
+Então o bot podia montar, por exemplo:
+
+> **Serve o conhaquinho porque tá uma friaca do djanho na Casa Amarela.**
+
+Na execução seguinte, a combinação já podia ser outra.
+
+E não existia um único gerador.
+
+O vocabulário mudava de acordo com **o sentido da mudança de temperatura e a faixa em que ela estava**.
+
+Se estava muito frio e esfriava ainda mais, apareciam meias de lã, luvas, aquecedor e conhaque.
+
+Entre 16 °C e 20 °C, entravam cobertinha, chá e casaquinho.
+
+Se a temperatura caía mas ainda estava relativamente quente, a casa dizia que tinha dado uma refrescada.
+
+Quando passava dos 26 °C, o repertório mudava para coisas como:
+
+> **Bota a ceva pá gelá, os legumo na brrrrrrasa**
+
+> **Prepara a caipirinha**
+
+> **Bota o ventilador no 3**
+
+> **Enche a piscininha de prástico**
+
+Havia até uma situação específica para quando **a temperatura subia, mas continuava frio pra caralho**. O script combinava pedaços como:
+
+> Viva! + A temperatura subiu + um cadinho + na Casa Amarela + contudo + continua + uma friaca do djanho.
+
+Até a parte objetiva variava. Em vez de publicar sempre a mesma estrutura, `random_dados()` alternava entre coisas como:
+
+> Tá 18ºC e a umidade é de 93%
+
+> Faz 18ºC e a umidade relativa do ar é 93%
+
+> Agora tá 18ºC e a umidade do ar é 93%
+
+Era uma solução simples para evitar mensagens repetitivas, mas acabou se tornando uma das partes que mais davam personalidade ao projeto.
+
+A CasaEsperta não tinha apenas dados para publicar. Ela tinha **um jeito próprio de falar sobre eles**.
+
+![Exemplo de publicação da CasaEsperta](imgs/firefox_ZrGOsZdjtO.png)
+
+---
+
+## O código
+
+O projeto acabou dividido em pequenos scripts responsáveis por partes diferentes da casa.
+
+- `Luminarias.py` e `LuminariasT.py` acompanhavam o estado das luminárias e reagiam às mudanças.
+- `TemperaturaInterna.py` cuidava das leituras internas e de boa parte das mensagens relacionadas ao clima.
+- `TemperaturaExterna.py` fazia o acompanhamento das condições externas.
+- `UmidadeSoloSamambaia.py` acompanhava a umidade da terra e dava voz à samambaia.
+- `auth.py` concentrava a configuração das credenciais usadas pelas APIs.
+
+Os scripts também mantinham alguns valores em arquivos de texto, como máximas e mínimas e os horários em que tinham ocorrido. Era uma maneira simples de preservar esse estado entre execuções.
+
+Não estou modernizando ou refatorando esse código porque isso apagaria justamente uma parte interessante deste repositório: **ele mostra como eu resolvia esses problemas naquele momento**.
+
+---
+
+## Estado atual
+
+O CasaEsperta não está mais em funcionamento.
+
+As integrações, bibliotecas e APIs utilizadas são da época do projeto e algumas mudaram bastante desde então — especialmente a API do Twitter, hoje X. Portanto, este repositório **não deve ser encarado como um projeto pronto para instalar e executar atualmente**.
+
+Também não pretendo atualizar dependências ou adaptar os bots às APIs atuais.
+
+A intenção agora é outra: preservar o projeto.
+
+Ele foi feito antes de ferramentas de IA generativa fazerem parte do cotidiano da programação. Muito do que está aqui surgiu de documentação, pesquisa, tentativa e erro, fios espalhados pela casa e bastante curiosidade.
+
+O código certamente tem coisas que hoje eu faria de outra maneira. E é justamente por isso que quero mantê-lo como está.
+
+Por algum tempo, sensores, relés, ESPs, scripts Python, uma samambaia, cachorros, ratos e algumas frases questionáveis fizeram parte do mesmo sistema distribuído.
+
+**E a Casa Amarela tuitava.**
+
+---
+
+### Arquivo histórico
+
+A antiga conta do projeto continua disponível em:
+
+**[@espertacasa no X/Twitter](https://x.com/espertacasa)**
+
+Este repositório é mantido como registro histórico do projeto original.
