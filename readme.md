@@ -1,75 +1,135 @@
+# CasaEsperta 🏡🤖
 
-# Bot do Twitter para Adafruit em Python
+> **Aviso de Preservação:** Este projeto encontra-se descontinuado e as instruções/scripts aqui presentes são mantidos como um registro histórico. Ele foi criado em 2021, antes da popularização das ferramentas de IA generativas para programação, numa época de muitos experimentos, pesquisas em documentações e tentativas de dar "voz" à minha própria casa. As integrações com APIs (como a do Twitter) provavelmente já não funcionam com o código atual. O objetivo deste repositório hoje é apenas documentar com carinho o que a CasaEsperta foi.
 
-Estes são quatro bots do Twitter desenvolvidos em Python que utilizam a API do Adafruit para obter informações e tuitar essas informações automaticamente.
-As informações são obtidas através de sensores e relés conectados à microcontroladores ESP32 e ESP8266 que gravam estes dados no Adafruit.
+O **CasaEsperta** foi um experimento de automação residencial e Internet das Coisas (IoT) muito particular.
 
-![Dashboard do Adafruit](https://images2.imgbox.com/5e/e8/0phZUHq2_o.jpg)
+Muito além de apenas encher uma casa com sensores e relés para monitorar o clima e acender lâmpadas, o verdadeiro objetivo do projeto era dar uma **personalidade** para a casa. Para isso, os dados coletados (como temperatura, umidade, e estado das luminárias) não iam apenas para um dashboard estático — eles também ganhavam vida no Twitter através da conta [@espertacasa](https://x.com/espertacasa).
 
-## Como funciona
+Foi um projeto feito pela pura curiosidade de construir coisas, errando, testando hardware de forma bem caseira e escrevendo scripts em Python para juntar as peças.
 
-Os bots se conectam à API do Adafruit usando a biblioteca `adafruit-io` e buscam informações de feeds especificados. Em seguida, eles formatam as informações em mensagens e publicam essas mensagens no Twitter usando a biblioteca `twython`.
-Cada bot tem sua função específica.
+---
 
-![Twitter do projeto](https://images2.imgbox.com/35/a6/EqpvOjyj_o.jpg)
+## 🛠 Como a casa funcionava (Arquitetura Geral)
 
-### Luminarias
+O funcionamento era dividido entre o hardware (microcontroladores ESP32/ESP8266 + sensores espalhados pela casa), a plataforma do Adafruit IO atuando como "cérebro" de dados, e pequenos bots em Python responsáveis por interagir com o Twitter.
 
-Esse bot é responsável por ler o estado de duas entradas digitais e postar no Twitter o estado de cada uma delas. O objetivo é monitorar o estado de duas lâmpadas em uma casa.
-Existem quatro funções que geram frases para cada situação possível de estado das duas lâmpadas: ligada ou desligada. Para cada lâmpada, há uma função para quando a lâmpada está ligada e outra para quando está desligada.
-O código entra em um loop while, que é executado indefinidamente, enquanto o programa está em execução. Dentro do loop, o código lê o estado das duas entradas digitais e as compara com os valores armazenados anteriormente. Se houver uma mudança em um dos estados das lâmpadas, uma mensagem será gerada usando uma das funções de frase e postada no Twitter. O estado anterior das lâmpadas é atualizado após cada comparação para que o loop possa verificar novamente se houve alteração nas lâmpadas.
+```mermaid
+flowchart TD
+    subgraph Hardware & Sensores
+        S1(Sensores de Temperatura/Umidade)
+        S2(Sensor de Umidade do Solo)
+        R1(Relés / Estado de Luminárias)
+    end
 
-![enter image description here](https://images2.imgbox.com/02/77/rOc0ROgw_o.jpg)
+    subgraph Microcontroladores
+        M1(ESP32 / ESP8266)
+    end
 
-### UmidadeSoloSamambaia
+    subgraph Nuvem
+        AIO(Adafruit IO)
+    end
 
-Este bot executa um loop infinito que checa a umidade da planta a cada hora. Se a umidade for menor que 45%, ele publica um tweet com uma mensagem aleatória pedindo para ser regada. Se a umidade aumentar mais do que 10 unidades em relação à última vez que foi medida, ele publica um tweet de agradecimento por ter sido regada. A frase aleatória (e sem contexto) que aparece ao final do tweet é simplesmente para que o twitter não derrube o bot por "status duplicado" já que neste bot as frases informativas são sempre padrão.
-![enter image description here](https://images2.imgbox.com/14/ec/ltJS3I42_o.jpg)
+    subgraph Bots Python
+        P1(TemperaturaInterna.py)
+        P2(TemperaturaExterna.py)
+        P3(UmidadeSoloSamambaia.py)
+        P4(Luminarias.py)
+    end
 
-### TemperaturaExterna
-A temperatura e umidade externas são coletadas do feed do Adafruit IO e salvas em variáveis, na sequência o programa lê alguns arquivos de texto que guardam as temperaturas e umidades mínimas e máximas, bem como os horários que elas ocorreram (para caso o programa se encerre inesperadamente e o usuário tenha que dispará-lo novamente, ele não perca as informações do dia). Posteriormente o bot checa os feeds do Adafruit a cada 30 minutos e verifica se há alteração em alguma variável, caso haja uma nova umidade ou temperatura máxima ou mínima, um tweet é disparado com esta informação, além dos dados serem armazenados nos arquivos de texto. 
-O bot ainda chama a função verificahora() em cada repetição do While para verificar se é 00:00, caso seja o horário mencionado, o bot dispara um tweet com um resumo climático do dia e aguarda até as 01:00 para dar sequência na execução do while.
-![enter image description here](https://images2.imgbox.com/cb/71/4p2CWJKK_o.jpg)
+    subgraph Mundo Externo
+        T(Twitter: @espertacasa)
+    end
 
-### TemperaturaInterna
-Funciona de forma similar ao bot anterior, entretanto cada vez que uma nova temperatura máxima ou mínima é registrada, é gerado um novo tweet a partir de uma função que gera uma frase aleatória temática para cada situação.
-![enter image description here](https://images2.imgbox.com/fc/b1/qmgJPajy_o.jpg)
+    S1 --> M1
+    S2 --> M1
+    R1 --> M1
+    M1 -->|MQTT/HTTP| AIO
 
+    AIO -->|Leitura da API| P1
+    AIO -->|Leitura da API| P2
+    AIO -->|Leitura da API| P3
+    AIO -->|Leitura da API| P4
 
-## Configuração
+    P1 -->|Tweepy / Twython| T
+    P2 -->|Tweepy / Twython| T
+    P3 -->|Tweepy / Twython| T
+    P4 -->|Tweepy / Twython| T
+```
 
-Para usar este bot, você precisará das seguintes informações:
+---
 
--   Chave de acesso e segredo do Twitter para a conta que o bot usará
--   Token de acesso e segredo do Twitter para a conta que o bot usará
--   Chave de acesso da API do Adafruit
--   Nome do feed do Adafruit que o bot irá monitorar
+## 🔌 Sensores, Dispositivos e o Adafruit IO
 
-Essas informações devem ser armazenadas em um arquivo `auth.py` na pasta raiz do projeto. Use o arquivo `auth.py` como modelo e substitua as informações com suas próprias chaves e tokens.
+Os circuitos foram todos montados inicialmente em protoboards e depois integrados pela casa. As medições envolviam coisas do dia a dia: se estava chovendo, se o quarto estava gelado, se as lâmpadas estavam ligadas e se as plantas estavam com sede.
 
-## Instalação
+![Circuitos e ESP32/8266](imgs/E55y_2DXIAI5_cC.jpg)
+*Registro da época: montagem dos circuitos com displays exibindo dados antes de integrá-los definitivamente no projeto.*
 
-1.  Clone este repositório para sua máquina local:
+Todos esses dispositivos enviavam informações para feeds do **Adafruit IO**. O Adafruit funcionava como um painel de controle e histórico. Através do dashboard, eu podia visualizar os dados graficamente, acompanhar as flutuações de temperatura e até mesmo interagir com a automação (acionando relés).
 
-`git clone https://github.com/lulinucs/CasaEsperta.git` 
+![Dashboard do Adafruit IO](imgs/E7vfCFJWQAYKQ4y.jpg)
+*Dashboard original do Adafruit IO usado como central de monitoramento.*
 
-2.  Navegue até a pasta raiz do projeto e instale as dependências usando o pip:
+---
 
-`cd CasaEsperta
-pip install -r requirements.txt` 
-    
-3.  Execute os bots que desejar:
+## 🐦 Os bots e a personalidade da casa
 
-`python Luminarias.py`
-`python UmidadeSoloSamambaia.py`
-`python TemperaturaExterna.py`
-`python TemperaturaInterna.py`
+O coração do projeto era como esses dados viravam mensagens. Havia quatro scripts principais em Python rodando em loop e consultando o Adafruit.
 
-O bot buscará informações do feed especificado no Adafruit e publicará um tweet com as informações a cada intervalo especificado no arquivo `config.py`.
+### 🌿 A samambaia que pedia água (`UmidadeSoloSamambaia.py`)
+Uma parte especialmente querida do projeto era a samambaia. Ela possuía um sensor de umidade de solo enfiado na terra do seu vaso. Quando a terra secava (umidade abaixo de 45%), a própria planta ia para o Twitter reclamar e pedir água para os "roomies".
 
+Quando alguém finalmente a regava, e o sensor detectava o aumento da umidade, ela mandava um tweet de agradecimento.
 
-## Projeto pausado
+![Samambaia com seu sensor](imgs/E7uV7hOWQAQ-I-X.jpg)
+![Tweet da Samambaia agradecendo a água](imgs/firefox_gI1k6MnNPz.png)
 
-Infelizmente, devido à falta de tempo, tive que descontinuá-lo por enquanto.
-O projeto foi muito importante para o meu aprendizado e desenvolvimento, e espero que tenha sido uma fonte de inspiração para outros makers. Embora o projeto esteja descontinuado, quero enfatizar que continuo comprometido com a minha jornada de criação e que espero retomar o projeto em algum momento.
-Obrigado aos 22 seguidores que acompanharam essa jornada no Twitter da Casa Esperta.
+### 🐶 Temperatura, clima e os animais da casa (`TemperaturaInterna.py` e `TemperaturaExterna.py`)
+Os bots acompanhavam constantemente as temperaturas. Eles guardavam os registros de máximas e mínimas diárias e mandavam resumos climáticos do dia à meia-noite.
+
+Mas a parte mais legal acontecia quando fazia frio de verdade. Os tweets sobre as baixas temperaturas vinham frequentemente acompanhados por fotos dos animais da casa usando roupinhas de frio ou enrolados nas cobertas.
+
+![Cachorros no frio - Registro 1](imgs/E5ZC-hOXwAgT-wE.jpg)
+![Cachorros no frio - Registro 2](imgs/E5Y3-wTWYAIlJyU.jpg)
+![Tweet do cachorro no frio](imgs/firefox_ZrGOsZdjtO.png)
+
+### 💡 Monitoramento das lâmpadas (`Luminarias.py`)
+O sistema também lia as entradas de relés para monitorar as luminárias da casa, anunciando as alterações em tempo real no Twitter, criando o registro do que acontecia na casa física na timeline digital.
+
+### 🎲 A geração de frases aleatórias
+Existia um "problema" técnico muito engraçado: o Twitter (hoje X) bloqueava bots que publicavam frases repetidas por considerá-los spam/flood. Para contornar isso, adicionei nos scripts um mecanismo que injetava trechos ou frases completamente sem noção ao final ou no meio dos tweets (como *"nada acontece, feijoada"*, ou gírias aleatórias).
+
+O resultado foi que as informações reais, precisas e sérias da casa (como uma nova temperatura mínima registrada) começaram a aparecer no Twitter junto a comentários absurdos e engraçados, o que ajudou a dar um charme caótico ao projeto.
+
+![Tweet com frase aleatória](imgs/firefox_cuRVVFajXf.png)
+
+---
+
+## 📸 Mais memórias do projeto
+
+Alguns registros diretos de como a conta `@espertacasa` interagia:
+
+![Perfil no Twitter](imgs/firefox_A3w2pyJzGG.png)
+![Tweet de temperatura](imgs/firefox_OoKVZuhptZ.png)
+![Tweet sobre a chuva e frio](imgs/firefox_dFcDqF3D4u.png)
+![Outro tweet](imgs/firefox_NQFcS3bRMz.png)
+
+---
+
+## 💻 Estrutura Histórica do Código
+
+O repositório é composto por:
+* `Luminarias.py`: Bot para o estado das luzes.
+* `TemperaturaExterna.py`: Registros e resumos climáticos (ambiente externo).
+* `TemperaturaInterna.py`: Temperaturas internas com alertas de máximas/mínimas e gerador de frases aleatórias.
+* `UmidadeSoloSamambaia.py`: O bot em que a planta ganha vida.
+* `auth.py`: (Onde as chaves da API eram salvas).
+* `imgs/`: Pasta de preservação das imagens e memórias visuais (recuperadas).
+
+> **Aviso sobre Dependências:**
+> Na época (2021), o projeto utilizava bibliotecas como `adafruit-io` e `twython`, conforme especificado no arquivo `requirements.txt` original. Não tente instalar ou rodar isso em 2026. Considere este um museu de código!
+
+---
+
+*“O interessante não é o tamanho do software. É o fato de sensores, microcontroladores, APIs, Python e uma conta do Twitter terem sido combinados para fazer uma casa pequena ganhar uma espécie de voz.”*
